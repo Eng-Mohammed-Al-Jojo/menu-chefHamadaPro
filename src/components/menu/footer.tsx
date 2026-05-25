@@ -7,24 +7,26 @@ import {
   FaPhoneAlt,
   FaTelegramPlane,
   FaTiktok,
-  FaCommentDots,
 } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { ref, onValue } from "firebase/database";
 import { db } from "../../firebase";
-import FeedbackModal from "../menu/FeedbackModal";
+import { useTranslation } from "react-i18next";
+import { PaymentService } from "../../services/paymentService";
+import type { PaymentMethod } from "../../types/payment";
+import PaymentModal from "./PaymentModal";
+import { FiCreditCard } from "react-icons/fi";
+
 
 const LOCAL_STORAGE_KEY = "footerInfo";
 
 export default function Footer() {
 
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [complaintsWhatsapp, setComplaintsWhatsapp] = useState("");
+  const { t } = useTranslation();
 
   const [footer, setFooter] = useState({
     address: "",
     phone: "",
-    altPhone: "",
     whatsapp: "",
     facebook: "",
     instagram: "",
@@ -32,7 +34,17 @@ export default function Footer() {
     telegram: "",
   });
 
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [isPaymentLoading, setIsPaymentLoading] = useState(true);
 
+  useEffect(() => {
+    const unsubPayments = PaymentService.subscribeToPaymentMethods((methods) => {
+      setPaymentMethods(methods);
+      setIsPaymentLoading(false);
+    });
+    return () => unsubPayments();
+  }, []);
   useEffect(() => {
     /* ===== footerInfo ===== */
     const localData = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -48,16 +60,8 @@ export default function Footer() {
       }
     });
 
-    /* ===== complaintsWhatsapp ===== */
-    const complaintsRef = ref(db, "settings/complaintsWhatsapp");
-    const unsubComplaints = onValue(complaintsRef, (snapshot) => {
-      const value = snapshot.val();
-      setComplaintsWhatsapp(value ? String(value).trim() : "");
-    });
-
     return () => {
       unsubFooter();
-      unsubComplaints();
     };
   }, []);
 
@@ -76,130 +80,67 @@ export default function Footer() {
   ];
 
   return (
-    <footer
-      className="
-        mt-20
-        bg-linear-to-t from-[#040309] via-[#040309]/95 to-[#040309]/90
-        text-[#F5F8F7]
-        rounded-t-3xl
-        border-t border-[#FDB143]/30
-        font-[Almarai]
-      "
-    >
-      <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-8">
-        {/* ===== Right | Address + Phone ===== */}
-        <div className="flex flex-col items-center md:items-end w-full md:w-auto space-y-2 text-center md:text-right">
-
-          {/* العنوان */}
+    <footer className="w-full bg-(--menu-card-bg)/40 backdrop-blur-md border-t border-(--menu-border) py-12 px-6 mt-20">
+      <div className="max-w-6xl mx-auto flex flex-col items-center gap-8">
+        {/* Contact info Row */}
+        <div className="flex flex-wrap justify-center gap-8 text-sm font-bold text-(--menu-text)">
           {footer.address && (
-            <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 text-lg font-[Cairo]">
-              <FaMapMarkerAlt className="text-xl shrink-0" />
-              <span className="wrap-break-word max-w-full md:max-w-xs">{footer.address}</span>
+            <div className="flex items-center gap-2">
+              <FaMapMarkerAlt className="text-primary" />
+              <span>{footer.address}</span>
             </div>
           )}
-
-          {/* رقم الجوال الأساسي */}
           {footer.phone && (
-            <a
-              href={`tel:${footer.phone}`}
-              className="flex items-center justify-center md:justify-end gap-2 text-lg font-[Cairo]"
-            >
-              <FaPhoneAlt className="shrink-0" />
+            <a href={`tel:${footer.phone}`} className="flex items-center gap-2 hover:text-(--menu-primary) transition-colors">
+              <FaPhoneAlt className="text-primary" />
               <span>{footer.phone}</span>
             </a>
           )}
-
-          {/* رقم جوال بديل */}
-          {footer.altPhone && (
-            <a
-              href={`tel:${footer.altPhone}`}
-              className="flex items-center justify-center md:justify-end gap-2 text-lg font-[Cairo]"
-            >
-              <FaPhoneAlt className="shrink-0" />
-              <span>{footer.altPhone}</span>
-            </a>
-          )}
-
-        </div>
-
-
-
-        {/* ===== Center | Social + Feedback ===== */}
-        <div className="flex flex-col items-center gap-5 w-full md:w-auto">
-          <div className="flex gap-4">
-            {socialIcons.map(
-              ({ Icon, url }, i) =>
-                url && (
-                  <a
-                    key={i}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="
-                      w-10 h-10 rounded-full flex items-center justify-center
-                      bg-[#FDB143] text-[#040309]
-                      hover:scale-110
-                      hover:shadow-[0_0_25px_rgba(253,177,67,0.6)]
-                      transition-all duration-300
-                    "
-                  >
-                    <Icon className="text-white text-lg" />
-                  </a>
-                )
-            )}
-          </div>
-
-          {/* ===== Feedback Button ===== */}
-          {complaintsWhatsapp !== "" && (
-            <button
-              onClick={() => setShowFeedbackModal(true)}
-              className="
-                mt-4 w-full max-w-xs flex items-center justify-center gap-2
-                bg-[#FDB143] text-[#040309]
-                rounded-2xl
-                py-3 px-4
-                shadow-lg
-                hover:scale-105 hover:shadow-xl
-                transition-all duration-300
-              "
-            >
-              <FaCommentDots className="w-6 h-6 animate-pulse" />
-              <span className="text-sm font-semibold">أرسل تقييمك</span>
-            </button>
-          )}
-        </div>
-
-        {/* ===== Left | Signature ===== */}
-        <div className="flex flex-col md:items-start items-center w-full md:w-auto">
-          <a
-            href="https://engmohammedaljojo.vercel.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-center gap-3 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition"
+          <button
+            onClick={() => setIsPaymentModalOpen(true)}
+            className="flex items-center gap-2 text-primary hover:text-secondary transition-colors cursor-pointer group"
           >
-            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-              <FaLaptopCode className="text-white text-lg" />
+            <div className="p-1.5 bg-primary/10 rounded-lg group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+              <FiCreditCard size={14} />
             </div>
+            <span className="text-xs uppercase tracking-widest font-black">طرق الدفع</span>
+          </button>
 
-            <div className="leading-tight text-center md:text-left">
-              <span className="block text-[10px] opacity-70 font-[Lemonada]">
-                تصميم وتطوير
-              </span>
-              <span className="block font-extrabold text-xs md:text-sm font-[Lemonada]">
-                Eng. Mohammed Eljoujo
-              </span>
+        </div>
+
+        {/* Social Icons */}
+        <div className="flex gap-4">
+          {socialIcons.map(({ Icon, url }, i) => url && (
+            <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+              className="w-10 h-10 rounded-xl flex items-center justify-center bg-(--menu-bg) border hover:border-secondary hover:text-primary border-primary text-secondary hover:scale-105 active:scale-95 transition-all duration-300 shadow-sm hover:shadow-lg shadow-primary/20">
+              <Icon size={18} />
+            </a>
+          ))}
+        </div>
+
+
+
+        {/* Developer Signature */}
+        <div className="pt-8 border-t border-(--menu-border) w-full flex flex-col items-center gap-4">
+          <a href="https://engmohammedaljojo.vercel.app/" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity">
+            <FaLaptopCode className="text-lg" />
+            <div className="text-[10px] font-bold uppercase tracking-widest text-center">
+              {t('footer.developed_by')} : Eng.<span className="text-(--menu-primary)">Mohammed El joujo</span>
             </div>
           </a>
+          <p className="text-[10px] text-(--menu-text-muted) font-bold">© {new Date().getFullYear()} {t('footer.rights_reserved')}</p>
         </div>
-      </div>
 
-      {/* ===== Feedback Modal ===== */}
-      {complaintsWhatsapp !== "" && (
-        <FeedbackModal
-          show={showFeedbackModal}
-          onClose={() => setShowFeedbackModal(false)}
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          methods={paymentMethods}
+          isLoading={isPaymentLoading}
         />
-      )}
+
+
+      </div>
     </footer>
   );
 }
