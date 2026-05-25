@@ -38,7 +38,7 @@ export default function MenuPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-(--menu-bg) text-(--menu-text) menu-wrapper overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-(--bg-main) text-(--text-primary) menu-wrapper overflow-x-hidden">
 
       {/* Loading */}
       <LoadingScreen visible={isLoading} />
@@ -73,13 +73,13 @@ export default function MenuPage() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1.2, opacity: 0.08 }}
               transition={{ duration: 10, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary rounded-full blur-[100px]"
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-white rounded-full blur-[80px] will-change-transform transform-gpu"
             />
             <motion.div
               initial={{ scale: 1, opacity: 0 }}
               animate={{ scale: 1.5, opacity: 0.05 }}
               transition={{ duration: 15, repeat: Infinity, repeatType: "reverse", ease: "easeInOut", delay: 2 }}
-              className="absolute -top-32 -left-32 w-[400px] h-[400px] bg-secondary rounded-full blur-[120px]"
+              className="absolute -top-32 -left-32 w-[400px] h-[400px] bg-secondary rounded-full blur-[100px] will-change-transform transform-gpu"
             />
           </div>
 
@@ -88,16 +88,11 @@ export default function MenuPage() {
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="relative flex items-center justify-center"
+            className="relative flex items-center justify-center transform-gpu "
           >
-            <div className="absolute inset-0 rounded-full border border-white/40 shadow-2xl shadow-primary/20 bg-white/10 backdrop-blur-3xl scale-125" />
+            <div className="absolute inset-0 rounded-full border border-white/40 shadow-2xl shadow-primary bg-white/10 backdrop-blur-xl scale-125" />
 
-            {/* Pulsing ring */}
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-              className="absolute w-[220px] h-[220px] md:w-[320px] md:h-[320px] rounded-full border-2 border-dashed border-primary/20"
-            />
+
 
             {/* logo */}
             <motion.img

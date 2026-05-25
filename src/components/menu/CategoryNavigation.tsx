@@ -80,8 +80,8 @@ function TabButton({
       className={`
         relative h-12 px-7 rounded-full text-sm font-black whitespace-nowrap tracking-wide
         transition-all duration-300 flex items-center gap-3 overflow-hidden border
-        ${isActive 
-          ? "text-white shadow-xl shadow-primary/30 border-transparent" 
+        ${isActive
+          ? "text-white shadow-xl shadow-primary/30 border-transparent"
           : "text-gray-500 bg-white hover:bg-gray-50 border-gray-100 hover:border-primary/20 hover:shadow-md hover:text-primary"
         }
       `}
@@ -100,4 +100,4 @@ function TabButton({
       )}
     </button>
   );
-}
+}

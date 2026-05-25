@@ -16,8 +16,7 @@ interface Props {
 const ItemRow = React.memo(
   ({ item, orderSystem, onClick }: Props) => {
 
-    const prices = String(item.price).split(",");
-    const basePrice = Number(prices[0]);
+    const prices = String(item.price).split(",").map(p => p.trim()).filter(Boolean);
     const unavailable = item.visible === false;
     const itemName = item.nameAr || item.name || "";
     const description = item.ingredientsAr || item.ingredients || "";
@@ -34,12 +33,12 @@ const ItemRow = React.memo(
     return (
       <motion.div
         className={`
-          relative flex items-center justify-between w-full rounded-[2.5rem] border
-          h-[120px] pr-26 sm:pr-28 md:pr-32 pl-4 mr-2
-          transition-all duration-500 group
+          relative flex items-center justify-between w-full rounded-3xl border
+          h-[110px] pr-28 pl-2 bg-white mr-2
+          transition-all duration-300 group
           ${unavailable
             ? "opacity-40 grayscale cursor-not-allowed border-gray-100 bg-gray-50/30 pointer-events-none"
-            : "border-white bg-white/70 backdrop-blur-xl shadow-lg shadow-gray-100/50 hover:shadow-2xl hover:shadow-primary/10 hover:bg-white hover:-translate-y-1 cursor-pointer"
+            : "border-gray-100 border border-primary/40 hover:border-primary hover:shadow-md shadow-sm cursor-pointer"
           }
         `}
         layout
@@ -54,7 +53,7 @@ const ItemRow = React.memo(
             src={item.image ? `/images/${item.image}` : "/logo.png"}
             alt={itemName}
             loading="lazy"
-            className="w-full h-full rounded-full object-cover bg-white shadow-xl border-4 border-white transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 group-hover:shadow-primary/30"
+            className="w-full h-full rounded-full object-cover bg-white shadow-md border-[3px] border-white ring-1 ring-gray-100 transition-transform duration-500 group-hover:scale-105"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/logo.png";
             }}
@@ -69,7 +68,7 @@ const ItemRow = React.memo(
 
           {/* FEATURED BADGE */}
           {(item.star || (item as any).isFeatured) && !unavailable && (
-            <div className="absolute -top-1  bg-secondary text-primary p-1.5 rounded-full shadow-lg border-2 border-white animate-bounce">
+            <div className="absolute -top-1  bg-primary text-white p-1.5 rounded-full shadow-lg border-2 border-white animate-bounce">
               <FaFire size={10} />
             </div>
           )}
@@ -87,17 +86,21 @@ const ItemRow = React.memo(
 
         {/* LEFT SECTION (PRICE + BUTTON) */}
         <div className="flex flex-col items-end gap-2.5 shrink-0 min-w-[90px] pl-4">
-          <div className={`font-black text-xl flex items-center gap-0.5 ${unavailable ? "text-gray-400 line-through" : "text-primary-600"}`}>
-            <span className="text-sm font-bold opacity-60">₪</span>
-            {basePrice}
+          <div className={`flex flex-wrap items-center justify-end gap-2 ${unavailable ? "text-gray-400 line-through" : "text-primary"}`}>
+            {prices.map((price, idx) => (
+              <div key={idx} className={`font-black flex items-center gap-0.5 ${prices.length > 1 ? "text-lg" : "text-xl"}`}>
+                <span className="text-sm font-bold opacity-60">₪</span>
+                {price}
+              </div>
+            ))}
           </div>
 
           {canOrder && (
             <button
               onClick={handleOrderClick}
-              className="bg-primary hover:bg-primary-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-black shadow-lg shadow-primary/30 transition-all duration-300 group-hover:scale-110 active:scale-95"
+              className="bg-primary hover:bg-primary/80 text-white px-4 py-2.5 rounded-full text-xs font-black shadow-lg shadow-primary/20 transition-all active:scale-95 uppercase tracking-wider whitespace-nowrap"
             >
-              <FiShoppingCart size={16} />
+              <FiShoppingCart size={14} />
             </button>
           )}
 

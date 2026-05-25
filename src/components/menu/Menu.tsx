@@ -82,8 +82,7 @@ interface Props {
 
 type LoadingPhase = "loading" | "skeleton" | "ready";
 
-const MIN_LOADING_TIME = 2000;
-const SKELETON_DURATION = 600;
+
 
 export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItemsChange, orderSystem: initialOrderSystem, onItemClick, onDetailsClick }: Props) {
   const { t } = useTranslation();
@@ -97,9 +96,11 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItems
   const [searchTerm, setSearchTerm] = useState("");
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>("all");
+  const [visibleCategoriesCount, setVisibleCategoriesCount] = useState(2);
 
   const isMounted = useRef(true);
   const startTime = useRef(Date.now());
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   /* ================= Data Fetching ================= */
   useEffect(() => {
@@ -129,17 +130,14 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItems
 
         const wasLoaded = sessionStorage.getItem("menu_orca_initial_load");
         const elapsed = Date.now() - startTime.current;
+        const MIN_LOADING_TIME = 1500;
         const remainingFetchTime = wasLoaded ? 0 : Math.max(0, MIN_LOADING_TIME - elapsed);
 
         setTimeout(() => {
           if (!isMounted.current) return;
           onLoadingChange?.(false);
-          setPhase("skeleton");
+          setPhase("ready"); // Skip skeleton for an instant, clean transition
           sessionStorage.setItem("menu_orca_initial_load", "true");
-
-          setTimeout(() => {
-            if (isMounted.current) setPhase("ready");
-          }, SKELETON_DURATION);
         }, remainingFetchTime);
 
         unsubscribe = MenuService.subscribeToMenuUpdates((freshData) => {
@@ -202,6 +200,35 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItems
       });
   }, [items, searchTerm]);
 
+  /* ================= Progressive Loading ================= */
+  useEffect(() => {
+    if (activeCategoryId !== "all" && activeCategoryId !== null) return;
+    if (visibleCategoriesCount >= availableCategories.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          // Small delay for smooth scroll feel
+          setTimeout(() => {
+            setVisibleCategoriesCount((prev) => Math.min(prev + 2, availableCategories.length));
+          }, 150);
+        }
+      },
+      { rootMargin: "300px" }
+    );
+
+    if (bottomRef.current) observer.observe(bottomRef.current);
+
+    return () => observer.disconnect();
+  }, [visibleCategoriesCount, availableCategories?.length, activeCategoryId]);
+
+  useEffect(() => {
+    // Reset to initial count when returning to 'all'
+    if (activeCategoryId === "all" || activeCategoryId === null) {
+      setVisibleCategoriesCount(2);
+    }
+  }, [activeCategoryId]);
+
   useEffect(() => {
     onFeaturedCheck?.(featuredItems.length > 0);
     onFeaturedItemsChange?.(featuredItems);
@@ -240,7 +267,7 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItems
 
   /* ================= Phase: Ready ================= */
   return (
-    <div className="menu-wrapper bg-white min-h-screen">
+    <div className="menu-wrapper bg-transparent min-h-screen">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -326,24 +353,31 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItems
                   className="space-y-16"
                 >
                   {(activeCategoryId === "all" || !activeCategoryId) ? (
-                    availableCategories.map((cat) => (
-                      <CategorySection
-                        key={cat.id}
-                        category={cat}
-                        subcategories={subcategories}
-                        items={
-                          [...items.filter(i => i.categoryId === cat.id)]
-                            .sort((a, b) => {
-                              if (a.visible === false && b.visible !== false) return 1;
-                              if (a.visible !== false && b.visible === false) return -1;
-                              return (a.order ?? 0) - (b.order ?? 0);
-                            })
-                        }
-                        orderSystem={orderSystem}
-                        onItemClick={handleItemClick}
-                        onDetailsClick={onDetailsClick}
-                      />
-                    ))
+                    <>
+                      {availableCategories.slice(0, visibleCategoriesCount).map((cat) => (
+                        <CategorySection
+                          key={cat.id}
+                          category={cat}
+                          subcategories={subcategories}
+                          items={
+                            [...items.filter(i => i.categoryId === cat.id)]
+                              .sort((a, b) => {
+                                if (a.visible === false && b.visible !== false) return 1;
+                                if (a.visible !== false && b.visible === false) return -1;
+                                return (a.order ?? 0) - (b.order ?? 0);
+                              })
+                          }
+                          orderSystem={orderSystem}
+                          onItemClick={handleItemClick}
+                          onDetailsClick={onDetailsClick}
+                        />
+                      ))}
+                      {visibleCategoriesCount < availableCategories.length && (
+                        <div ref={bottomRef} className="py-12 flex justify-center items-center opacity-60">
+                          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin drop-shadow-md" />
+                        </div>
+                      )}
+                    </>
                   ) : (
                     activeCategory && (
                       <CategorySection
