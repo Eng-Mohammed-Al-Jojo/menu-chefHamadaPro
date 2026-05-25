@@ -96,7 +96,7 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItems
   const [searchTerm, setSearchTerm] = useState("");
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>("all");
-  const [visibleCategoriesCount, setVisibleCategoriesCount] = useState(2);
+  const [visibleCategoriesCount, setVisibleCategoriesCount] = useState(3);
 
   const isMounted = useRef(true);
   const startTime = useRef(Date.now());
@@ -200,6 +200,25 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItems
       });
   }, [items, searchTerm]);
 
+  /**
+   * Pre-compute sorted items per category ONCE.
+   * Previously, filter+sort ran inside JSX on every render for every visible
+   * category — this was a major source of jank.
+   */
+  const itemsByCategory = useMemo(() => {
+    const map: Record<string, Item[]> = {};
+    availableCategories.forEach((cat) => {
+      map[cat.id] = items
+        .filter((i) => i.categoryId === cat.id)
+        .sort((a, b) => {
+          if (a.visible === false && b.visible !== false) return 1;
+          if (a.visible !== false && b.visible === false) return -1;
+          return (a.order ?? 0) - (b.order ?? 0);
+        });
+    });
+    return map;
+  }, [items, availableCategories]);
+
   /* ================= Progressive Loading ================= */
   useEffect(() => {
     if (activeCategoryId !== "all" && activeCategoryId !== null) return;
@@ -210,11 +229,11 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItems
         if (entries[0].isIntersecting) {
           // Small delay for smooth scroll feel
           setTimeout(() => {
-            setVisibleCategoriesCount((prev) => Math.min(prev + 2, availableCategories.length));
-          }, 150);
+            setVisibleCategoriesCount((prev) => Math.min(prev + 3, availableCategories.length));
+          }, 100);
         }
       },
-      { rootMargin: "300px" }
+      { rootMargin: "500px", threshold: 0 }
     );
 
     if (bottomRef.current) observer.observe(bottomRef.current);
@@ -225,7 +244,7 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItems
   useEffect(() => {
     // Reset to initial count when returning to 'all'
     if (activeCategoryId === "all" || activeCategoryId === null) {
-      setVisibleCategoriesCount(2);
+      setVisibleCategoriesCount(3);
     }
   }, [activeCategoryId]);
 
@@ -358,14 +377,7 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItems
                           key={cat.id}
                           category={cat}
                           subcategories={subcategories}
-                          items={
-                            [...items.filter(i => i.categoryId === cat.id)]
-                              .sort((a, b) => {
-                                if (a.visible === false && b.visible !== false) return 1;
-                                if (a.visible !== false && b.visible === false) return -1;
-                                return (a.order ?? 0) - (b.order ?? 0);
-                              })
-                          }
+                          items={itemsByCategory[cat.id] ?? []}
                           orderSystem={orderSystem}
                           onItemClick={handleItemClick}
                           onDetailsClick={onDetailsClick}
@@ -382,14 +394,7 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItems
                       <CategorySection
                         category={activeCategory}
                         subcategories={subcategories}
-                        items={
-                          [...items.filter(i => i.categoryId === activeCategoryId)]
-                            .sort((a, b) => {
-                              if (a.visible === false && b.visible !== false) return 1;
-                              if (a.visible !== false && b.visible === false) return -1;
-                              return (a.order ?? 0) - (b.order ?? 0);
-                            })
-                        }
+                        items={itemsByCategory[activeCategory.id] ?? []}
                         orderSystem={orderSystem}
                         onItemClick={handleItemClick}
                         onDetailsClick={onDetailsClick}

@@ -1,13 +1,21 @@
 import { useMemo } from "react";
 import ItemRow from "./ItemRow";
 import type { Category, Item, Subcategory } from "./Menu";
-import { motion } from "framer-motion";
 
-const containerVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.05 } }
-};
-
+/**
+ * CategorySection — Performance-optimised version
+ *
+ * Key changes:
+ *  • Removed framer-motion completely from this component.
+ *    `whileInView` on every row was creating hundreds of IntersectionObserver
+ *    instances simultaneously, which is the primary cause of scroll freeze.
+ *  • Removed `staggerChildren` animation — nice visually but extremely expensive
+ *    with large lists (each child re-renders on the stagger tick).
+ *  • The component itself is NOT wrapped in React.memo intentionally — it receives
+ *    a new `items` array every render from the parent's `.filter().sort()` call.
+ *    The parent (Menu.tsx) now memoises the per-category item arrays to prevent
+ *    this component from re-rendering unnecessarily.
+ */
 interface Props {
   category: Category;
   subcategories: Subcategory[];
@@ -17,14 +25,20 @@ interface Props {
   onDetailsClick?: (item: Item) => void;
 }
 
-export default function CategorySection({ category, subcategories, items, orderSystem, onItemClick, onDetailsClick }: Props) {
-
+export default function CategorySection({
+  category,
+  subcategories,
+  items,
+  orderSystem,
+  onItemClick,
+  onDetailsClick,
+}: Props) {
   const groupedItems = useMemo(() => {
     const groups: Record<string, Item[]> = {};
     const noSubItems: Item[] = [];
 
-    items.forEach(item => {
-      const sub = subcategories.find(s => s.id === item.subcategoryId);
+    items.forEach((item) => {
+      const sub = subcategories.find((s) => s.id === item.subcategoryId);
       if (item.subcategoryId && sub && sub.visible !== false) {
         if (!groups[item.subcategoryId]) groups[item.subcategoryId] = [];
         groups[item.subcategoryId].push(item);
@@ -38,7 +52,12 @@ export default function CategorySection({ category, subcategories, items, orderS
 
   const activeSubcategories = useMemo(() => {
     return subcategories
-      .filter(sub => sub.categoryId === category.id && sub.visible !== false && groupedItems.groups[sub.id])
+      .filter(
+        (sub) =>
+          sub.categoryId === category.id &&
+          sub.visible !== false &&
+          groupedItems.groups[sub.id]
+      )
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   }, [category.id, subcategories, groupedItems.groups]);
 
@@ -57,14 +76,7 @@ export default function CategorySection({ category, subcategories, items, orderS
       <div className="space-y-8">
         {/* Main Items */}
         {groupedItems.noSubItems.length > 0 && (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            layout
-            className="flex flex-col w-full gap-4"
-          >
+          <div className="flex flex-col w-full gap-4">
             {groupedItems.noSubItems.map((item) => (
               <ItemRow
                 key={item.id}
@@ -74,14 +86,13 @@ export default function CategorySection({ category, subcategories, items, orderS
                 onDetailsClick={onDetailsClick}
               />
             ))}
-          </motion.div>
+          </div>
         )}
 
         {/* Subcategories */}
         {activeSubcategories.map((sub) => (
           <div key={sub.id} className="space-y-6">
             <div className="flex items-center gap-3 w-full">
-
               {/* left line */}
               <div className="h-px flex-1 bg-primary/30" />
 
@@ -92,17 +103,9 @@ export default function CategorySection({ category, subcategories, items, orderS
 
               {/* right line */}
               <div className="h-px flex-1 bg-primary/30" />
-
             </div>
 
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              layout
-              className="flex flex-col w-full gap-4"
-            >
+            <div className="flex flex-col w-full gap-4">
               {groupedItems.groups[sub.id].map((item) => (
                 <ItemRow
                   key={item.id}
@@ -112,7 +115,7 @@ export default function CategorySection({ category, subcategories, items, orderS
                   onDetailsClick={onDetailsClick}
                 />
               ))}
-            </motion.div>
+            </div>
           </div>
         ))}
       </div>

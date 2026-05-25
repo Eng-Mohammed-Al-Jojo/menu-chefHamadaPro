@@ -104,7 +104,7 @@ export default function ItemModal({ item, isOpen, onClose }: Props) {
                           key={idx}
                           onClick={() => setSelectedPriceIndex(idx)}
                           className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all border ${selectedPriceIndex === idx
-                            ? "bg-secondary text-black border-secondary shadow-lg shadow-secondary/20"
+                            ? "bg-secondary text-white border-secondary shadow-lg shadow-secondary/20"
                             : "bg-(--bg-main) text-(--text-main) border-(--border-color) hover:border-secondary/40"
                             }`}
                         >
