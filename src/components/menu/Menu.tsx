@@ -289,8 +289,7 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, onFeaturedItems
                 placeholder={t('common.search') || "عن ماذا تبحث؟"}
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="w-full bg-gray-50/50 border border-gray-200/60 rounded-full py-3.5 pr-14 pl-6 text-sm font-bold text-gray-800 placeholder:text-gray-400 placeholder:font-medium focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/10 outline-none transition-all duration-300 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_4px_15px_rgba(0,0,0,0.04)] focus:shadow-[0_8px_25px_rgba(245,158,11,0.08)]"
-              />
+                className="w-full bg-white border border-gray-200/60 rounded-full py-3.5 pr-14 pl-6 text-sm font-bold text-gray-800 placeholder:text-gray-400 placeholder:font-medium outline-none transition-all duration-300 shadow-sm focus:border-primary/40 focus:ring-4 focus:ring-primary/10 focus:shadow-lg hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5"              />
               {searchTerm && (
                 <button
                   onClick={handleSearchClear}

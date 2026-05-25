@@ -112,7 +112,7 @@ export default function MenuPage() {
             transition={{ delay: 0.5, duration: 0.6 }}
             className="mt-12 z-10 space-y-4"
           >
-            <h1 className="text-xl md:text-2xl text-gray-900 font-black tracking-tight leading-tight">
+            <h1 className="text-xl md:text-2xl text-gray-900 font-black tracking-tight leading-tight mt-12">
               {t("menu.title") || "Chef Hamada"}
             </h1>
 

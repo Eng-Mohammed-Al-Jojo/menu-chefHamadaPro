@@ -53,7 +53,7 @@ const ItemRow = React.memo(
             src={item.image ? `/images/${item.image}` : "/logo.png"}
             alt={itemName}
             loading="lazy"
-            className="w-full h-full rounded-full object-cover bg-white shadow-md border-[3px] border-white ring-1 ring-gray-100 transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full rounded-full object-cover bg-white shadow-md border-[3px] border-primary ring-1 ring-gray-100 transition-transform duration-500 group-hover:scale-105"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/logo.png";
             }}
